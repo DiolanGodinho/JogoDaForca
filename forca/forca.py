@@ -1,10 +1,10 @@
 import unicodedata, getpass, os
 
-# ******************************************************************************
+# *********************************************************************
 #
 #           Funções que serão usadas pelo programa principal
 #
-# ******************************************************************************
+# **********************************************************************
 
 # Desenha a forca de acordo com a quantidade de erros, juntamente com a palavra oculta (espaços e letras certas) e a lista de letras já ditas.
 def desenhaForca(erros: int, palavra: list, letrasTentadas: list):
@@ -144,10 +144,12 @@ def pedeOpcao(dica: bool) -> str:
     return opcao
     
 
-def desenhaLinha():
-    for x in range(50):
+def cabecalhoJogador(mensagem: str):
+    for x in range(72):
         print("*", end="")
-    print("\n")
+    print("\n\n\t\t" + mensagem + "\n")
+    for x in range(72):
+        print("*", end="")
 
 # Padroniza uma string para maiúsculas sem acentuação e sem espaços no início ou fim da mesma.
 def padronizaString(string: str) -> str:
@@ -169,19 +171,22 @@ def perguntaPorReinicio() -> bool:
         return True
     return False
 
-# ******************************************************************************
+# **********************************************************************
 #
 #           Programa Principal que roda o Jogo da Forca
 #
-# ******************************************************************************
+# **********************************************************************
 
 start = True
 while start:
-    desenhaLinha()
-    palavra = padronizaString(getpass.getpass(prompt="Escolha uma palavra para ser advinhada: "))
+    cabecalhoJogador("Jogador 1")
+    palavra = pedePalavraOculta()
+    # palavra = padronizaString(getpass.getpass(prompt="\nEscolha uma palavra para ser advinhada: "))
     palavraOculta = ["_" for letra in palavra]
-    dica = padronizaString(getpass.getpass(prompt="\nEntre com uma dica para a palavra: "))
-    desenhaLinha()
+    dica = pedePalavraOculta
+    # dica = padronizaString(getpass.getpass(prompt="\nEntre com uma dica para a palavra: "))
+    os.system('clear')
+    cabecalhoJogador()
     
     letrasTentadas = []
     erros = 0
