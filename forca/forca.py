@@ -7,21 +7,22 @@ import unicodedata, getpass, os, random
 
 MAXIMO_DE_ERROS = 7
 MODOS_DE_JOGO = [
-        "\t1 - Individual.",
-        "\t2 - Duelo (1 x 1)"
+        "  1 - Individual.",
+        "  2 - Duelo (1 x 1)"
         ]
-OPCOES_DE_JOGADAS = [
-        "\t1 - Escolher uma letra.",
-        "\t2 - Dizer qual é a palavra.",
-        "\t3 - Sair da partida.",
-        "\t4 - Mostrar dica."
-        ]
-BANCO_DE_PALAVRAS = "palavrasComDicas.txt"
-MSG_MODOS_JOGO = "\nModos de jogo:"
-MSG_OPCOES_JOGADAS = "\nOpções de jogadas:"
+CAMINHO = "palavrasComDicas.txt"
+MSG_MODOS_JOGO = "Modos de jogo:\n"
+MSG_OPCOES_JOGADAS = "Opções de jogadas:\n"
 MSG_COMPLETOU_PALAVRA = "\nParabéns, você acertou todas as letras da palavra."
 MSG_ESGOTOU_TENTATIVAS = "\nTentativas esgotadas. Infelizmente o boneco foi enforcado."
 MSG_ADVINHOU_PALAVRA = "\nParabéns, você advinhou a palavra."
+MSG_BOAS_VINDAS = """
+******************************************************
+*                                                    *
+*            Bem vindo ao jogo da forca.             *
+*                                                    *
+******************************************************
+"""
 
 # *********************************************************************
 #
@@ -29,29 +30,37 @@ MSG_ADVINHOU_PALAVRA = "\nParabéns, você advinhou a palavra."
 #
 # **********************************************************************
 
+# Imprime uma mesagem a ser passada e os itens de uma lista.
+def imprimeItensDeLista(lista: list, mensagem: str, fim="\n"):
+    print(mensagem, end=fim)
+    for item in lista:
+        print(item, end=fim)
+
+# Pede uma das opções do menu.
+def pedeOpcao(menu: list) -> str:
+    opcao = input("\nDigite o número da opção desejada: ")
+    while opcao not in [str(i) for i in range(1, len(menu) + 1)]:
+        opcao = input("\nDigite o número da opção desejada: ")
+    return opcao
+
 # Pede ao usuário para selecionar o modo de jogo: individual ou duelo.
 def selecionaPalavraEDica(modo: str) -> list:
     if modo == "1":
-        return palavraEDicaDoUsuario()
-    elif modo == "2":
         return palavraEDicaDoBanco()
+    elif modo == "2":
+        return palavraEDicaDoUsuario()
         
-# Solicita ao jogador uma palavra a ser advinhada e uma dica.
-def palavraEDicaDoUsuario() -> list:
-    palavra = pedePalavraSemMostraLa("\nEscolha uma palavra para ser advinhada: ")
-    dica = pedePalavraSemMostraLa("\nEntre com uma dica para a palavra: ")
-    return [palavra, dica]
-
 # Seleciona uma palavra com a respectiva dica do banco de palavras.
 def palavraEDicaDoBanco() -> list:
-    conteudoDoBanco = pegaConteudoDeArquivo(BANCO_DE_PALAVRAS)
+    conteudoDoBanco = pegaConteudoDeArquivo(CAMINHO)
     linhasDoBanco = separaConteudoEmLinhas(conteudoDoBanco)
     palavrasEDicas = separaFrasesPorPalavras(linhasDoBanco)
-    return sorteiaItem(palavrasEDicas)
+    palavraSorteada = sorteiaItem(palavrasEDicas)
+    return [padronizaString(item) for item in palavraSorteada]
 
 # Retorna o conteudo de um arquivo
 def pegaConteudoDeArquivo(caminho: str) -> str:
-    arquivo = open("palavrasComDicas", mode="r", encoding="utf-8")
+    arquivo = open(caminho, mode="r", encoding="utf-8")
     conteudoDoArquivo = arquivo.read()
     arquivo.close()
     return conteudoDoArquivo
@@ -68,28 +77,33 @@ def separaFrasesPorPalavras(linhas: list) -> list:
 def sorteiaItem(itens: list) -> list:
     return random.choice(itens)
 
-# Retorna a entrada de uma palavra ou frase pelo usuário sem mostrá-la no prompt.
-def pedePalavraSemMostraLa(mensagem: str) -> str:
-    return padronizaString(getpass.getpass(prompt=mensagem))
-
-# Retorna a entrada de uma palavra ou frase pelo usuário mostrando-a no prompt.
-def pedePalavra(mensagem: str) -> str:
-    return padronizaString(input(mensagem))
-
 # Padroniza uma string para maiúsculas sem acentuação e sem espaços no início ou fim da mesma.
 def padronizaString(string: str) -> str:
     return unicodedata.normalize("NFD", string).encode("ascii", "ignore").decode("utf-8").upper().strip()
 
+# Solicita ao jogador uma palavra a ser advinhada e uma dica.
+def palavraEDicaDoUsuario() -> list:
+    palavra = pedePalavraSemMostraLa("\nEscolha uma palavra para ser advinhada: ")
+    dica = pedePalavraSemMostraLa("\nEntre com uma dica para a palavra: ")
+    return [palavra, dica]
+
+# Retorna a entrada de uma palavra ou frase pelo usuário sem mostrá-la no prompt.
+def pedePalavraSemMostraLa(mensagem: str) -> str:
+    return padronizaString(getpass.getpass(prompt=mensagem))
+
 # Cria e retorna uma lista de underlines: um para cada letra da palavra a ser advinhada.
 def geraEspacosParaLetras(palavra: str) -> list:
-    return ["_" for letra in palavra if letra != " " else " "]
+    return ["_" if letra != " " else " " for letra in palavra]
 
 # Imprime o diagrama com a forca, a palavra oculta, as letras já tentadas e a dica.
-def imprimeDiagrama(erros: int, palavra: list, letras: list, dica: bool):
+def imprimeDiagrama(erros: int, palavra: list, letras: list, mostrar: bool, dica: str):
     desenhaForca(erros, palavra)
-    imprimeItensDeLista(letras, "Letras já ditas:", " ")
-    if dica:
-        print("\nDica: "+dica)
+    imprimeItensDeLista(letras, "\nLetras já ditas:", " ")
+    if mostrar:
+        print("\n\nDica: "+dica+"\n")
+    else:
+        print("\n")
+    print("*************************************************************\n")
 
 # Desenha a forca de acordo com a quantidade de erros, juntamente com a palavra oculta (espaços e letras certas) e a lista de letras já ditas.
 def desenhaForca(erros: int, palavra: list):
@@ -158,40 +172,33 @@ def desenhaForca(erros: int, palavra: list):
         print("|   / \\  ")
         print("+~~~~~~~+")
     
-# Imprime uma mesagem a ser passada e os itens de uma lista.
-def imprimeItensDeLista(lista: list, mensagem: str, fim="\n": str):
-    print(mensagem, end=fim)
-    for item in lista:
-        print(item, end=fim)
-
 # Define o menu de opções e o retorna como uma lista. As opcoes disponíveis dependem da quantidade de erros e se a dica já foi mostrada.
 def defineOpcoesDeJogadas(dica: bool) -> list:
+    OpcoesDejogadas = [
+        "  1 - Escolher uma letra.",
+        "  2 - Dizer qual é a palavra.",
+        "  3 - Sair da partida.",
+        "  4 - Mostrar dica."
+        ]
     if dica:
-        OPCOES_DE_JOGADAS.pop()
-    return menu
-
-# Pede uma das opções do menu.
-def pedeOpcao(menu: list) -> str:
-    opcao = input("\nDigite o número da opção desejada: ")
-    while opcao not in [str(i) for i in range(1, len(menu) + 1)]:
-        opcao = input("\nDigite o número da opção desejada: ")
-    return opcao
+        OpcoesDejogadas.pop()
+    return OpcoesDejogadas
 
 # Pede uma letra do alfabeto. Aceita apenas letras do alfabeto com possíveis acentuações em português. Se o usuário digitar mais de um caracter ou um carracter inválido, o programa irá pedir uma letra novamente.
 def pedeLetraValida(tentadas: list) -> str:
     letra = input("\nEscolha uma letra do alfabeto: ")
-    while not LetraValida(letra):
+    while not LetraValida(letra, tentadas):
         if len(letra) > 1:
             letra = input("\nDigite uma única letra do alfabeto: ")
         elif ord(letra) not in letrasDoPortugues():
             letra = input("\nDigite uma letra do alfabeto: ")
-        elif letra in tentadas:
-            letra = input("\nEssa letra já foi usada.")
+        elif padronizaString(letra) in tentadas:
+            letra = input("\nEntre com uma letra não utilizada: ")
     return padronizaString(letra)
 
 # Valida se um caractere inserido é uma letra válida.
 def LetraValida(letra: str, tentadas: list) -> bool:
-    if len(letra) > 1 or ord(letra) not in letrasDoPortugues() or letra in tentadas:
+    if (len(letra) > 1) or (ord(letra) not in letrasDoPortugues()) or (padronizaString(letra) in tentadas):
         return False
     return True
 
@@ -203,8 +210,9 @@ def letrasDoPortugues() -> list:
     asciiPortugues.extend(acentuadas)
     return asciiPortugues
 
-def incluiEmLetrasTentadas(letra: str, tentadas: list) -> list:
-    tentadas.append(letra)
+def incluiItemEmLista(letra: str, tentadas: list) -> list:
+    if letra not in tentadas:
+        tentadas.append(letra)
     return tentadas
 
 # Para cada letra certa dita pelo jogador, insere todas as ocorrências da mesma no diagrama da palavra oculta impressa jutamente com a forca.
@@ -215,11 +223,21 @@ def insereLetraCorreta(letra: str, palavra: str, palavraOculta: list) -> list:
         palavra = palavra.replace(letra, " ", 1)
     return palavraOculta
 
+# Imprime mesagem, caso a letra não ocorra na palavra.
+def mostraMensagemDeLetraIncorreta(letra: str, palavra: str):
+    ocorrencias = palavra.count(letra)
+    if ocorrencias == 0:
+        print(f"\nA palavra não possui a letra {letra}.")
+    
 # Verifica se todas as letras da palavra foram advinhadas.
 def completou(palavra: list) -> bool:
     if palavra.count("_") == 0:
         return True
     return False
+
+# Retorna a entrada de uma palavra ou frase pelo usuário mostrando-a no prompt.
+def pedePalavra(mensagem: str) -> str:
+    return padronizaString(input(mensagem))
 
 # Confere se o palpite do jogador está correto.
 def palpiteCerto(palpite: str, palavra: str) -> bool:
@@ -227,6 +245,10 @@ def palpiteCerto(palpite: str, palavra: str) -> bool:
         return True
     else:
         return False
+
+# Retorna uma lista com as letras da palavra.
+def desvendaPalavra(palavra: str) -> list:
+    return list(palavra)
 
 # Pergunta se deseja jogar novamente.
 def perguntaPorReinicio() -> bool:
@@ -245,6 +267,7 @@ def perguntaPorReinicio() -> bool:
 
 start = True
 while start:
+    print(MSG_BOAS_VINDAS)
     # Escolhe o modo de jogo
     imprimeItensDeLista(MODOS_DE_JOGO, MSG_MODOS_JOGO)
     modoEscolhido = pedeOpcao(MODOS_DE_JOGO)
@@ -264,7 +287,7 @@ while start:
     menuComDica = True
     
     # Inicia partida
-    imprimeDiagrama(erros, palavraOculta, letrasTentadas, mostraDica)
+    imprimeDiagrama(erros, palavraOculta, letrasTentadas, mostraDica, dica)
     while jogando:
         opcoesDeJogadas = defineOpcoesDeJogadas(mostraDica)
         imprimeItensDeLista(opcoesDeJogadas, MSG_OPCOES_JOGADAS)
@@ -273,7 +296,7 @@ while start:
         # Tenta uma letra
         if jogadaEscolhida == "1":
             letra = pedeLetraValida(letrasTentadas)
-            incluiEmLetrasTentadas(letra)
+            incluiItemEmLista(letra, letrasTentadas)
             os.system('clear')
             
             if letra in palavra:
@@ -283,9 +306,7 @@ while start:
                     jogando = False
             else:
                 erros += 1
-                if erros == MAXIMO_DE_ERROS:
-                    print(MSG_ESGOTOU_TENTATIVAS)
-                    jogando = False
+                mostraMensagemDeLetraIncorreta(letra, palavra)
 
         # Tenta um palpite
         elif jogadaEscolhida == "2":
@@ -300,10 +321,6 @@ while start:
                 erros += 1
                 print(f"\n{palpite} não é palavra correta!")
 
-                if erros == MAXIMO_DE_ERROS:
-                    print(MSG_ESGOTOU_TENTATIVAS)
-                    jogando = False
-
         # Sai da partida
         elif jogadaEscolhida == "3":
             jogando = False
@@ -317,7 +334,13 @@ while start:
             erros += 1
             os.system('clear')
 
-        imprimeDiagrama(erros, palavraOculta, letrasTentadas, mostraDica)
+        # Enforca o boneco
+        if erros == MAXIMO_DE_ERROS:
+            print(MSG_ESGOTOU_TENTATIVAS)
+            palavraOculta = desvendaPalavra(palavra)
+            jogando = False
+
+        imprimeDiagrama(erros, palavraOculta, letrasTentadas, mostraDica, dica)
         
         # Retira a opcao de pedir do menu se faltar apenas um erro para enforcar o boneco.
         if erros == MAXIMO_DE_ERROS - 1:
